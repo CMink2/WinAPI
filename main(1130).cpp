@@ -234,7 +234,7 @@ LRESULT CALLBACK WndProc(HWND hWnd/*Window Handle*/, UINT message, WPARAM wParam
 	{
 		PAINTSTRUCT ps;
 		HDC hdc = BeginPaint(hWnd, &ps);    
-		Rectangle(hdc, 1180, 0, 1280, 100);
+	
 		//brush = stock object => don't delete.
 		EndPaint(hWnd, &ps);	//무효화 영역이 없음을 알림. WM_PAINT를 해제하지 않아 메세지 큐에 무수히 쌓인다.
 	}

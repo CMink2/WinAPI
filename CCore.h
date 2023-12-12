@@ -1,6 +1,6 @@
 #pragma once
-#include "define.h"
-#include<Windows.h>
+#include"pch.h"
+
 //Program의 중추 클래스.
 /*
 	프로그램의 중추가 되는 클래스가 여러개 있으면? -> 절대 안됨. -> 딱 하나만 존재해야 한다.
@@ -49,8 +49,7 @@ class CCore2
 {
 	SINGLE(CCore2);
 	private:
-		CCore2();
-		~CCore2();
+		
 		HWND m_hWnd;	//windows handle
 		POINT m_ptResolution;	//main window's Resolution
 		HDC m_dc;	//DC handle.
@@ -61,6 +60,8 @@ class CCore2
 		int Init(HWND _hwnd, POINT _ptRe);
 		//작업 진행 함수.
 		void Progress();
+		HWND GetHandle();
+		
 };
 
 /*

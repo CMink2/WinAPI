@@ -1,6 +1,8 @@
 #include "CCore.h"
 #include"pch.h"
 #include"CObject.h"
+#include"CTimeMgr.h"
+#include"CKeyMgr.h"
 //인스턴스 초기화.
 CCore* CCore::m_instance = nullptr;
 CObject g_obj;
@@ -38,33 +40,32 @@ int CCore2::Init(HWND _hwnd, POINT _ptRe)
 	//dc의 handle 받아오기.
 	m_dc = GetDC(m_hWnd);	//메세지와 엮여있지 않음으로 메세지 큐에 쌓일 일이 없다. 대신 프로그램 종료 시 해제해야 한다.
 	
+	//manager 초기화
+	CTimeMgr::GetInstance()->Init();
+	CKeyMgr::GetInstance()->Init();
+
 	//object.
-	g_obj.m_Pos = POINT{ m_ptResolution.x / 2, m_ptResolution.y / 2 };
-	g_obj.m_Scale = POINT{ 100, 100 };
+	g_obj.SetPos(Vec2((float)m_ptResolution.x / 2, (float)m_ptResolution.y / 2));
+	g_obj.SetScale(Vec2(100, 100));
 
 	return S_OK;
 }
 
 void CCore2::Update()
 {
+	//object의 현재 포지션,
+	Vec2 currentPos = g_obj.GetPos();
 	//비동기식 키 입력 (키가 눌렸냐 물어봄.) => 상태값을 반환한다.
 	if (GetAsyncKeyState(VK_LEFT) & 0x8000)	//비트 연산 했을 때 최상단 자릿수가 있으면 true
 	{
-		g_obj.m_Pos.x -= 1;
+		currentPos.x -= 200.f * CTimeMgr::GetInstance()->GetDeltaTimef();
 	}
 	else if (GetAsyncKeyState(VK_RIGHT) & 0x8000)
 	{
-		g_obj.m_Pos.x += 1;
+		currentPos.x += 200.f * CTimeMgr::GetInstance()->GetDeltaTimef();
 	}
-	else if (GetAsyncKeyState(VK_UP) & 0x8000)
-	{
-		g_obj.m_Pos.x -= 1;
-	}
-	else if (GetAsyncKeyState(VK_DOWN) & 0x8000)
-	{
-		g_obj.m_Pos.x += 1;
-	}
-	g_obj.m_Pos;
+	//change position.
+	g_obj.SetPos(currentPos);
 }
 
 void CCore2::Render()
@@ -72,28 +73,35 @@ void CCore2::Render()
 	//그리기 작업. (drawing) 그리기 위해선 Device Context가 필요하다. 
 	//게임 속 Renderring은 매 순간(frame) 다시 그리는 행위이다. (특정 변화만 그리는 것이 아니다.) 조금의 움직임이 있던 없던 그린다.
 	//이동한 오브젝트 위치로 그리기.
-	Rectangle(m_dc, g_obj.m_Pos.x - g_obj.m_Scale.x / 2,
-		g_obj.m_Pos.y - g_obj.m_Scale.y / 2,
-		g_obj.m_Pos.x + g_obj.m_Scale.x / 2,
-		g_obj.m_Pos.y + g_obj.m_Scale.y / 2);
+	Vec2 vPos = g_obj.GetPos();
+	Vec2 vScale = g_obj.GetScale();
+	Rectangle(m_dc, 
+		vPos.x - vScale.x/2.f, 
+		vPos.y - vScale.y / 2.f, 
+		vPos.x + vScale.x / 2.f, 
+		vPos.y + vScale.y / 2.f);
+	/*
+		int(vPos.x - vScale.x / 2.f),
+		int(vPos.y - vScale.y / 2.f),
+		int(vPos.x + vScale.x / 2.f),
+		int(vPos.y - vScale.y / 2.f)
+		);
+	*/
 }
 
 
 void CCore2::Progress()
 {
-	//이전 카운트.
-	static int iPrevCount = GetTickCount();
-
-	//현재 카운트
-	int iCurCount = GetTickCount();
-	//1초가 지나면 들어옴.
-	if (iCurCount - iPrevCount > 1000)
-	{
-		iPrevCount = iCurCount;
-	}
+	//Manager Update.
+	CTimeMgr::GetInstance()->Update();	// 매 프레임마다 타임매니저 업데이트.
 
 	//update.
 	Update();
 	//render
 	Render();
+}
+
+HWND CCore2::GetHandle()
+{
+	return m_hWnd;
 }
